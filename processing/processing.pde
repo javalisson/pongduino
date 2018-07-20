@@ -5,7 +5,7 @@ Bola bola;
 DisplayPontuacao display1, display2;
 
 float distanciaBastaoCanto = 35;
-float velocidadeInicial = 5;
+float velocidadeInicial = 3;
 float aceleracao = 1.005;
 float angMinInicioJog1;
 float angMaxInicioJog1;
@@ -26,6 +26,7 @@ void setup() {
   bastao2 = new Bastao(width - distanciaBastaoCanto, distanciaBastaoCanto);
 
   bola = new Bola();
+  bola.setBastoes(bastao1, bastao2);
   bola.setPosicao(width/2, height/2);
   bola.setVelocidade(1);
   bola.setAceleracao(aceleracao);
@@ -37,6 +38,10 @@ void setup() {
 void draw() {
   background(0);
   ellipse(mouseX, mouseY, 50, 50);
+  
+  bastao1.posicao.y = mouseY;
+  bastao2.posicao.y = mouseY;
+  
   campo.desenhar();
   bastao1.desenhar();
   bastao2.desenhar();
@@ -63,6 +68,6 @@ void draw() {
 
 void mousePressed() {
   println("Resolucao: " + width + " x " + height);
-  bola.setAngulo(HALF_PI+PI/16);
+  bola.setAngulo(0);
   // bola.setVelocidade(1);
 }

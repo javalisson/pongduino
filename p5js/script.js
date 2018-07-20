@@ -29,6 +29,13 @@ class Bola {
         this.cor = color(255);
         this.velocidade = p5.Vector.fromAngle(random(-QUARTER_PI, QUARTER_PI), 1);
         this.aceleracao = 1;
+        this.velocidadeMaxima = 35;
+        this.anteriorX = 0;
+    }
+
+    setBastoes(bastao1, bastao2) {
+        this.bastao1 = bastao1;
+        this.bastao2 = bastao2;
     }
 
     setPosicao(x, y) {
@@ -65,8 +72,20 @@ class Bola {
             this.posicao.y = height;
             this.velocidade.y = -abs(this.velocidade.y);
         }
+        if ((this.isColisao(this.bastao1, 1) == false && this.posicao.y > this.bastao1.posicao.y && this.posicao.y < this.bastao1.posicao.y + this.bastao1.altura && this.posicao.x < this.bastao1.posicao.x) || (this.isColisao(this.bastao2, 2) == false && this.posicao.y > this.bastao2.posicao.y && this.posicao.y < this.bastao2.posicao.y + this.bastao2.altura && this.posicao.x > this.bastao2.posicao.x)) {
+            console.log(this.velocidade.mag());
+        }
+        if (this.isColisao(this.bastao1, 1)) {
+            this.posicao.x = this.bastao1.posicao.x + this.bastao1.largura;
+            this.velocidade.x = -this.velocidade.x;
+        }
+        if (this.isColisao(this.bastao2, 2)) {
+            this.posicao.x = this.bastao2.posicao.x;
+            this.velocidade.x = -this.velocidade.x;
+        }
+        this.anteriorX = this.posicao.x;
         this.posicao.add(this.velocidade);
-        this.velocidade.mult(this.aceleracao);
+        if (this.velocidade.mag() < this.velocidadeMaxima) this.velocidade.mult(this.aceleracao);
     }
 
     desenhar() {
@@ -76,6 +95,27 @@ class Bola {
         noStroke();
         rect(-this.dimensoes/2, -this.dimensoes/2, this.dimensoes, this.dimensoes);
         pop();
+    }
+
+    isColisao(bastao, jogador) {
+        // bastao.posicao.y = ponta de cima do bastao
+        // bastao.posicao.y + bastao.altura = ponta de baixo do bastao
+        if (this.posicao.y > bastao.posicao.y && this.posicao.y < bastao.posicao.y + bastao.altura) {
+            if (jogador == 1) {
+                if ((this.anteriorX > bastao.posicao.x && this.posicao.x < bastao.posicao.x)) console.log(this.velocidade.mag());
+                if (((this.posicao.x - bastao.posicao.x) > 0 && (this.posicao.x - bastao.posicao.x) < this.dimensoes/2) || (this.anteriorX > bastao.posicao.x && this.posicao.x < bastao.posicao.x)) {
+                    return true;
+                }
+            }
+            if (this.anteriorX < bastao.posicao.x && this.posicao.x > bastao.posicao.x) console.log(this.velocidade.mag());;
+            if (jogador == 2) {    
+                if (((this.posicao.x - bastao.posicao.x) > 0 && (this.posicao.x - bastao.posicao.x) < this.dimensoes/2)  || (this.anteriorX < bastao.posicao.x && this.posicao.x > bastao.posicao.x)) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
     }
 }
 
@@ -157,6 +197,7 @@ function setup() {
     bastao2 = new Bastao(width - distanciaBastaoCanto, distanciaBastaoCanto);
 
     bola = new Bola();
+    bola.setBastoes(bastao1, bastao2);
     bola.setPosicao(width/2, height/2);
     bola.setVelocidade(velocidadeInicial);
     bola.setAngulo(random(angMinInicioJog1, angMaxInicioJog1));
@@ -172,6 +213,10 @@ function draw() {
     // pinta o fundo de preto
     background(0, 0, 0);
     ellipse(mouseX, mouseY, 50, 50);
+
+    bastao1.posicao.y = mouseY;
+    bastao2.posicao.y = mouseY;
+
     campo.desenhar();
     bastao1.desenhar();
     bastao2.desenhar();
@@ -200,7 +245,7 @@ function draw() {
 function mousePressed() {
     fullscreen(true);
     console.log("Resolucao: " + width + " x " + height);
-    bola.setAngulo(HALF_PI+PI/16);
+    bola.setAngulo(0);
     // bola.setVelocidade(1);
 }
 
