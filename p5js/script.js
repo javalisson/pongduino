@@ -10,6 +10,11 @@ class Bastao {
         this.altura = 75;
         this.posicao = createVector(x, y);
         this.cor = color(255);
+        this.numJogador = 1;
+    }
+
+    setJogador(numJogador) {
+        this.numJogador = numJogador;
     }
 
     desenhar() {
@@ -19,6 +24,26 @@ class Bastao {
         noStroke();
         rect(0, 0, this.largura, this.altura);
         pop();
+    }
+
+    getAngulo(y) {
+        var alturaRelativa = (y - this.posicao.y ) / this.altura;
+        if (alturaRelativa < 0.1) alturaRelativa = 0.1;
+        if (alturaRelativa > 0.9) alturaRelativa = 0.9;
+
+        var a, b;
+
+        if (this.numJogador == 1) {
+            a = -HALF_PI + PI/16;
+            b = HALF_PI - PI/16;
+        } else {
+            a = PI + HALF_PI - PI/16;
+            b = HALF_PI + PI/16;
+        }
+
+        var angulo = lerp(a, b, alturaRelativa);
+        return angulo;
+
     }
 }
 
@@ -72,20 +97,24 @@ class Bola {
             this.posicao.y = height;
             this.velocidade.y = -abs(this.velocidade.y);
         }
-        if ((this.isColisao(this.bastao1, 1) == false && this.posicao.y > this.bastao1.posicao.y && this.posicao.y < this.bastao1.posicao.y + this.bastao1.altura && this.posicao.x < this.bastao1.posicao.x) || (this.isColisao(this.bastao2, 2) == false && this.posicao.y > this.bastao2.posicao.y && this.posicao.y < this.bastao2.posicao.y + this.bastao2.altura && this.posicao.x > this.bastao2.posicao.x)) {
+        if ((this.isColisao(this.bastao1) == false && this.posicao.y > this.bastao1.posicao.y && this.posicao.y < this.bastao1.posicao.y + this.bastao1.altura && this.posicao.x < this.bastao1.posicao.x) || (this.isColisao(this.bastao2) == false && this.posicao.y > this.bastao2.posicao.y && this.posicao.y < this.bastao2.posicao.y + this.bastao2.altura && this.posicao.x > this.bastao2.posicao.x)) {
             console.log(this.velocidade.mag());
         }
-        if (this.isColisao(this.bastao1, 1)) {
+        if (this.isColisao(this.bastao1)) {
             this.posicao.x = this.bastao1.posicao.x + this.bastao1.largura;
-            this.velocidade.x = -this.velocidade.x;
+            // this.velocidade.x = -this.velocidade.x;
+            this.setAngulo(this.bastao1.getAngulo(this.posicao.y));
+            if (this.velocidade.mag() < this.velocidadeMaxima) this.velocidade.mult(this.aceleracao);
         }
-        if (this.isColisao(this.bastao2, 2)) {
+        if (this.isColisao(this.bastao2)) {
             this.posicao.x = this.bastao2.posicao.x;
-            this.velocidade.x = -this.velocidade.x;
+            // this.velocidade.x = -this.velocidade.x;
+            this.setAngulo(this.bastao2.getAngulo(this.posicao.y));
+            if (this.velocidade.mag() < this.velocidadeMaxima) this.velocidade.mult(this.aceleracao);
         }
         this.anteriorX = this.posicao.x;
         this.posicao.add(this.velocidade);
-        if (this.velocidade.mag() < this.velocidadeMaxima) this.velocidade.mult(this.aceleracao);
+        // if (this.velocidade.mag() < this.velocidadeMaxima) this.velocidade.mult(this.aceleracao);
     }
 
     desenhar() {
@@ -97,18 +126,18 @@ class Bola {
         pop();
     }
 
-    isColisao(bastao, jogador) {
+    isColisao(bastao) {
         // bastao.posicao.y = ponta de cima do bastao
         // bastao.posicao.y + bastao.altura = ponta de baixo do bastao
         if (this.posicao.y > bastao.posicao.y && this.posicao.y < bastao.posicao.y + bastao.altura) {
-            if (jogador == 1) {
+            if (bastao.numJogador == 1) {
                 if ((this.anteriorX > bastao.posicao.x && this.posicao.x < bastao.posicao.x)) console.log(this.velocidade.mag());
                 if (((this.posicao.x - bastao.posicao.x) > 0 && (this.posicao.x - bastao.posicao.x) < this.dimensoes/2) || (this.anteriorX > bastao.posicao.x && this.posicao.x < bastao.posicao.x)) {
                     return true;
                 }
             }
             if (this.anteriorX < bastao.posicao.x && this.posicao.x > bastao.posicao.x) console.log(this.velocidade.mag());;
-            if (jogador == 2) {    
+            if (bastao.numJogador == 2) {    
                 if (((this.posicao.x - bastao.posicao.x) > 0 && (this.posicao.x - bastao.posicao.x) < this.dimensoes/2)  || (this.anteriorX < bastao.posicao.x && this.posicao.x > bastao.posicao.x)) {
                     return true;
                 }
@@ -169,7 +198,7 @@ var bola;
 var display1, display2;
 
 var distanciaBastaoCanto = 35;
-var velocidadeInicial = 5;
+var velocidadeInicial = 10;
 var aceleracao = 1.005;
 var angMinInicioJog1;
 var angMaxInicioJog1;
@@ -186,6 +215,8 @@ function setup() {
     // canvas do tamanho da tela
     createCanvas(displayWidth, displayHeight);
 
+    noCursor();
+
     angMinInicioJog1 = -QUARTER_PI;
     angMaxInicioJog1 = QUARTER_PI;
     angMinInicioJog2 = HALF_PI+QUARTER_PI;
@@ -195,6 +226,9 @@ function setup() {
 
     bastao1 = new Bastao(distanciaBastaoCanto, distanciaBastaoCanto);
     bastao2 = new Bastao(width - distanciaBastaoCanto, distanciaBastaoCanto);
+
+    bastao1.setJogador(1);
+    bastao2.setJogador(2);
 
     bola = new Bola();
     bola.setBastoes(bastao1, bastao2);
@@ -212,8 +246,7 @@ function setup() {
 function draw() {
     // pinta o fundo de preto
     background(0, 0, 0);
-    ellipse(mouseX, mouseY, 50, 50);
-
+    
     bastao1.posicao.y = mouseY;
     bastao2.posicao.y = mouseY;
 
